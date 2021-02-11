@@ -1,6 +1,5 @@
 'use strict'
 
-
 class Director {
     constructor(projects){
         this.projects = projects;
@@ -12,9 +11,15 @@ class Director {
                 if(Math.floor(Math.random()*Math.floor(2)) == 0){
                     this.projects[`project${i}`].type = 'web';
                     this.projects[`project${i}`].inWork = false;
+                    this.projects[`project${i}`].statusDone = 0;
+                    this.projects[`project${i}`].done = false;
+                    this.projects[`project${i}`].statusTest = 0;
                 }else{
                     this.projects[`project${i}`].type = 'mobile';
                     this.projects[`project${i}`].inWork = false;
+                    this.projects[`project${i}`].statusDone = 0;
+                    this.projects[`project${i}`].done = false;
+                    this.projects[`project${i}`].statusTest = 0;
                 }
             }
         }else{
@@ -23,9 +28,15 @@ class Director {
                 if(Math.floor(Math.random()*Math.floor(2)) == 0){
                     this.projects[`project${parseInt(Object.keys(this.projects)[Object.keys(this.projects).length - 1].slice(7,8))}`].type = 'web';
                     this.projects[`project${parseInt(Object.keys(this.projects)[Object.keys(this.projects).length - 1].slice(7,8))}`].inWork = false;
+                    this.projects[`project${parseInt(Object.keys(this.projects)[Object.keys(this.projects).length - 1].slice(7,8))}`].statusDone = 0;
+                    this.projects[`project${parseInt(Object.keys(this.projects)[Object.keys(this.projects).length - 1].slice(7,8))}`].done = false;
+                    this.projects[`project${parseInt(Object.keys(this.projects)[Object.keys(this.projects).length - 1].slice(7,8))}`].statusTest = 0;
                 }else{
                     this.projects[`project${parseInt(Object.keys(this.projects)[Object.keys(this.projects).length - 1].slice(7,8))}`].type = 'mobile';
                     this.projects[`project${parseInt(Object.keys(this.projects)[Object.keys(this.projects).length - 1].slice(7,8))}`].inWork = false;
+                    this.projects[`project${parseInt(Object.keys(this.projects)[Object.keys(this.projects).length - 1].slice(7,8))}`].statusDone = 0;
+                    this.projects[`project${parseInt(Object.keys(this.projects)[Object.keys(this.projects).length - 1].slice(7,8))}`].done = false;
+                    this.projects[`project${parseInt(Object.keys(this.projects)[Object.keys(this.projects).length - 1].slice(7,8))}`].statusTest = 0;
                 }
             }
         }
@@ -41,34 +52,33 @@ class Director {
     recruit(){
         if(Object.keys(this.projects).length != 0){
             for(let g in this.projects){
-                if(this.projects[g].inWork == false){
+                if(this.projects[g].inWork == false && this.projects[g].done != true){
                     if (this.projects[g].type == 'web'){
-                        this.projects[g].worker = new Worker('web',false);
-                        webDepartment.workers[parseInt(Object.keys(webDepartment.workers)[Object.keys(webDepartment.workers).length])] = this.projects[g].worker;
+                        this.projects[g].worker = new Worker('web',false, g, 0);
+                        webDepartment.workers[`worker${parseInt(Object.keys(webDepartment.workers).length + 1)}`] = this.projects[g].worker;
                     }else{
-                        this.projects[g].worker = new Worker('mobile',false);
-                        mobileDepartment.workers[parseInt(Object.keys(webDepartment.workers)[Object.keys(webDepartment.workers).length])] = this.projects[g].worker;
-                    }
-                    
-                    // if(Object.keys(webDepartment.workers).length == 0){
-                        
-                    // }else{
-                    //     webDepartment.workers[parseInt(Object.keys(webDepartment.workers)[Object.keys(webDepartment.workers).length])] = workerWeb;
-                    // }
-
-                    // this.projects[g].worker = worker1;
-                    // webDepartment.projects.project1.worker.working = true;  
-                }
+                        this.projects[g].worker = new Worker('mobile',false, g, 0);
+                        mobileDepartment.workers[`worker${parseInt(Object.keys(mobileDepartment.workers).length + 1)}`] = this.projects[g].worker;
+                    } 
+                }      
             }
         }
     }
-
+    set recruitTester(proj){
+        for(let i in this.projects){   
+            if(this.projects[i] == proj){
+                this.projects[i].worker = new Worker('test',false,i,0);
+                testDepartment.workers[`worker${parseInt(Object.keys(testDepartment.workers).length + 1)}`] = proj.worker;
+            }    
+        }
+    }
 }
 
-class Departments{
+class Departments extends Director{
     workers = {}
 
     constructor(option){
+        super(Director)
         this.type = option.type;
         this.projects = option.projects;
     }
@@ -76,14 +86,15 @@ class Departments{
 
     set addProjectFromDirector(value){
         for(let prop in value){
-            if (value[prop].type == this.type){
+            if (value[prop].type == this.type && value[prop].worker != undefined && value[prop].inWork == false){
                 if(Object.keys(this.workers) != 0 ){
+                    webDepartment.recruit();
                     for(let i in this.workers){
                         if (this.workers[i].working == false){
                             this.projects[prop] = value[prop];
-                            this.projects[prop].inWork = true;
-                            this.workers[i].working == true;
-                            this.workers[i].doproj == this.projects[prop];
+                            value[prop].inWork = true;
+                            value[prop].worker.working = true;
+                            
                         }
                     }
                 }
@@ -91,16 +102,80 @@ class Departments{
         }
         console.log(this);   
     }
-    // set workers(value){
+
+    set work(listProj){
+        for(let listItem in listProj){
+            for(let i in this.projects){
+                if(listItem == i && this.projects[i].done == false){
+                    if( listProj[listItem].hard == 0 && listProj[listItem].statusDone == 1){
+                        listProj[listItem].done = true;
+                        listProj[listItem].worker.donesProj +=1;
+                        listProj[listItem].worker.doproj = null;
+                        listProj[listItem].worker.working = false;
+                        delete listProj[listItem].worker;
+                    }
+                    if( listProj[listItem].hard == 1 && listProj[listItem].statusDone == 2){
+                        listProj[listItem].done = true;
+                        listProj[listItem].worker.donesProj +=1;
+                        listProj[listItem].worker.doproj = null;
+                        listProj[listItem].worker.working = false;
+                        delete listProj[listItem].worker;
+                    }
+                    if( listProj[listItem].hard == 2 && listProj[listItem].statusDone == 3){
+                        listProj[listItem].done = true;
+                        listProj[listItem].worker.donesProj +=1;
+                        listProj[listItem].worker.doproj = null;
+                        listProj[listItem].worker.working = false;
+                        delete listProj[listItem].worker;
+                    }
+                    listProj[listItem].statusDone += 1;
+                }
+                if (this.projects[i].done == true){
+                    testDepartment.onTest = i;
+                }
+            }
+        }
+    }
+    set onTest(done){
+        this.projects[done] = director.pushProjects[done];
+    }
+
+    set testing(list){
+        for(let i in this.projects){
+            if(this.projects[i].statusTest == 0 && this.projects[i].worker == undefined){
+                this.recruitTester = this.projects[i];
+                this.projects[i].statusTest += 1;
+            }else{
+                if(this.projects[i].statusTest != 0 && this.projects[i].worker != undefined){
+                    this.projects[i].statusTest += 1;
+                }
+            }
+            for(let li in list){
+                if(this.projects[i].statusTest == 1 && i == li){
+
+                // this.projects[i].worker.donesProj += 1;
+                // this.projects[i].worker.doproj = null;
+                // this.projects[i].worker.working = false;
+                delete list[i];
+                // director.relise +=1
+                
+                }   
+            }
         
-    // }
+            
+            
+        }
+        
+    }
     
 }
 
 class Worker{
-    constructor(type,working){
+    constructor(type,working,doproj,donesProj){
         this.type = type;
         this.working = working;
+        this.doproj = doproj;
+        this.donesProj = donesProj;
     }
 }
 
@@ -115,46 +190,33 @@ const mobileDepartment = new Departments({
                                         projects:{}
                                         });
 
-const testDepartment = new Departments('test');
-
-
-// director.addNewProjects = Math.floor(Math.random() * Math.floor(5));
-// console.log(director.pushProjects)
-
-// webDepartment.addProjectFromDirector = director.pushProjects
-// mobileDepartment.addProjectFromDirector = director.pushProjects
-
-// director.recruit();
-
-
-
-// console.log(webDepartment.projects)
-// console.log(webDepartment)
-
-
-
-// console.log(director.pushProjects)
-
-// console.log(director.pushProjects)
-
+const testDepartment = new Departments({
+                                        type: 'test',
+                                        projects:{}
+                                        });
 
 function company(day){
     for(let i = 0;i < day;i++){
-        console.log(`Day    ${i+1}\n`);
+        director.recruit();
 
-        director.addNewProjects = Math.floor(Math.random() * Math.floor(5));
+        director.addNewProjects = Math.floor(Math.random() * Math.floor(2));
         console.log(director.pushProjects);
-        console.log('\n');
 
-
-        
         console.log('Web');
         webDepartment.addProjectFromDirector = director.pushProjects
-        console.log('\n');
         console.log('Mobile')
         mobileDepartment.addProjectFromDirector = director.pushProjects
-        director.recruit();
-        console.log('____________________________________________________________________')
+
+        webDepartment.work = director.pushProjects;
+        mobileDepartment.work = director.pushProjects;
+        testDepartment.testing = director.pushProjects
+
+        console.log(webDepartment);
+        console.log('Test')
+        console.log(testDepartment);
+        console.log('---------------------------------')
+        console.log(director.pushProjects);
     }
 }
-company(2);
+company(3);
+
