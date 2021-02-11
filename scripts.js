@@ -141,33 +141,39 @@ class Departments extends Director{
     }
 
     set testing(list){
-        for(let i in this.projects){
-            if(this.projects[i].statusTest == 0 && this.projects[i].worker == undefined){
-                this.recruitTester = this.projects[i];
-                this.projects[i].statusTest += 1;
-            }else{
-                if(this.projects[i].statusTest != 0 && this.projects[i].worker != undefined){
+        if(Object.keys(this.projects).length != 0){
+            for(let i in this.projects){
+                console.log('00000',i,this);
+                if(this.projects[i].statusTest == 0 && this.projects[i].worker == undefined){
+                    this.recruitTester = this.projects[i];
                     this.projects[i].statusTest += 1;
+                }else{
+                    if(this.projects[i].statusTest != 0 && this.projects[i].worker != undefined){
+                        this.projects[i].statusTest += 1;
+                    }
                 }
             }
-            for(let li in list){
-                if(this.projects[i].statusTest == 1 && i == li){
+            for(let i in this.projects){
+                if(this.projects[i].statusTest == 1 ){
 
-                // this.projects[i].worker.donesProj += 1;
-                // this.projects[i].worker.doproj = null;
-                // this.projects[i].worker.working = false;
-                delete list[i];
-                // director.relise +=1
+                    this.projects[i].worker.donesProj += 1;
+                    this.projects[i].worker.doproj = null;
+                    this.projects[i].worker.working = false;
+                    delete this.projects[i].worker;
+                    if(this.projects[i].type == 'web'){
+                        delete webDepartment.projects[i];
+                    }else{
+                        delete mobileDepartment.projects[i];
+                    }
+                    delete this.projects[i]
+                    delete director.projects[i];
+
+                    // director.relise +=1
                 
-                }   
-            }
-        
-            
-            
-        }
-        
-    }
-    
+                }
+            }   
+        } 
+    } 
 }
 
 class Worker{
@@ -211,12 +217,15 @@ function company(day){
         mobileDepartment.work = director.pushProjects;
         testDepartment.testing = director.pushProjects
 
-        console.log(webDepartment);
         console.log('Test')
         console.log(testDepartment);
-        console.log('---------------------------------')
         console.log(director.pushProjects);
+        console.log('webDepartament >>', webDepartment);
+        console.log('mobileDepartament >>', mobileDepartment);
+        console.log('---------------------------------')
+        console.log(testDepartment);
+        console.log('-------------end----------------')
     }
 }
-company(3);
+company(10);
 
