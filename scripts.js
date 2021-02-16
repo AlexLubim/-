@@ -70,6 +70,7 @@ class Director {
             }    
           }
         }else{
+          console.log('object% :>> ');
           for(let i in this.projects){ 
             if(this.projects[i] == proj){
               this.projects[i].worker = pers;
@@ -78,7 +79,6 @@ class Director {
               testDepartment.workers[w].working = true;
               testDepartment.workers[w].doProject = i;
               director.projects[i].statusTest += 1;
-
             }    
           }
         }
@@ -116,9 +116,9 @@ class Departments extends Director{
         if(this.type === director.projects[item].type && director.projects[item].inWork === true){
           director.projects[item].statusDone += 1;
         }
-        if((director.projects[item].hard === 0 && director.projects[item].statusDone === 1) ||
-        (director.projects[item].hard === 1 && director.projects[item].statusDone === 2) ||
-        (director.projects[item].hard === 2 && director.projects[item].statusDone === 3)){
+        if((director.projects[item].hard === 0 && director.projects[item].statusDone >= 1) ||
+        (director.projects[item].hard === 1 && director.projects[item].statusDone >= 2) ||
+        (director.projects[item].hard === 2 && director.projects[item].statusDone >= 3)){
           director.projects[item].done = true;
           for(let worker in this.workers){
             if (item === this.workers[worker].doProject){
@@ -128,6 +128,8 @@ class Departments extends Director{
             }
           }
           delete director.projects[item].worker;
+          console.log('object :>> ', director.projects[item].worker);
+          console.log(' list:>> ',director.projects);
           testDepartment.testing = director.project
         }
         
@@ -136,23 +138,28 @@ class Departments extends Director{
 
     set testing(listProject){
       for(let i in director.projects){
-        if(director.projects[i].done === true){
-          for(let worker in this.workers){
-            console.log('object :>> ', i, director.projects);
-            if(!director.projects[i].worker && this.workers[worker].working === false && director.projects[i]){
-              director.recruitTester(director.projects[i],this.workers[worker],worker);
-            }
-            
-            if(director.projects[i].statusTest === 1 && i === this.workers[worker].doProject){
+        if(director.projects[i].done === true ){
+          if(this.workers.length === 0 && director.projects[i].worker === undefined && director.projects[i].statusTest === 0){
+            director.recruitTester(director.projects[i]);
+          }else{
+            for(let worker in this.workers){
+              // console.log('object :>> ', i, director.projects);
+              if(director.projects[i].worker === undefined && this.workers[worker].working === false && director.projects[i]){
+                director.recruitTester(director.projects[i],this.workers[worker],worker);
+              }
+              if(director.projects[i].statusTest === 2 && i === this.workers[worker].doProject){
                 this.workers[worker].donesProj += 1;
                 this.workers[worker].doProject = '0';
                 this.workers[worker].working = false;
-                delete director.projects[i];
-                relise +=1;
+              }
             }
-            
           }
-          director.recruitTester(director.projects[i]);
+          if(director.projects[i].statusTest === 2){
+            delete director.projects[i];
+            relise +=1;
+          }else{
+            director.projects[i].statusTest +=1;
+          }
         }         
       }  
     } 
@@ -209,15 +216,14 @@ function company(day){
         mobileDepartment.deleteProgrammer();
         testDepartment.deleteProgrammer();
         
-        
+
         console.log('Test')
         console.log(testDepartment);
-        // console.log(' list:>> ',director.pushProjects);
+        
         
         console.log('---------------------------------')
         // console.log('webDepartament >>', webDepartment);
         // console.log('mobileDepartament >>', mobileDepartment);
-        console.log('testDepartament >>',testDepartment);
         console.log('-------------end----------------')
     }
 
