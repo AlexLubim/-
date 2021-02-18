@@ -2,190 +2,230 @@
 let relise = 0;
 let addWorker = 0;
 let remWorker = 0;
+let id = 0;
+
+
+
 
 class Director {
     constructor(projects){
         this.projects = projects;
     }
     set addNewProjects(value){  
+      
       for(let i = 0; i < value; i++){
-        
-          this.projects[`project${Object.keys(this.projects).length}`] = {hard: Math.round(Math.random()*3),
-                                                                          inWork : false,
-                                                                          statusDone : 0,
-                                                                          done : false,
-                                                                          statusTest : 0,
-                                                                          type : Math.round(Math.random())
-                                                                        };
-      } 
+        id += i+1;
+        const newProject = {
+        hard: Math.round(Math.random()*2),
+        inWork : false,
+        statusDone : 0,
+        done : false,
+        statusTest : 0,
+        type : Math.round(Math.random()),
+        worker: [],
+        id : id
+        };
+        this.projects = [...this.projects, newProject];
+      }
     }
 
-    // get pushProjects(){
-    //   return this.projects;   
-    // }
-
-    recruit(person,project,nameWorker){
-      for(let item in director.projects){
-        if(this.projects[item].inWork === false && this.projects[item].done != true && this.projects[item].worker === undefined){
-          if(!person){
-            if(this.projects[item].type === 0){
-              this.projects[item].worker = new Worker(0,false, item, 0,0);
-              this.projects[item].worker.working = true;
-              this.projects[item].inWork = true; 
-              webDepartment.workers[`worker${Object.keys(webDepartment.workers).length}`] = this.projects[item].worker;
-              addWorker += 1;
-            }else{
-              this.projects[item].worker = new Worker('1',false, item, 0,0);
-              this.projects[item].worker.working = true;
-              this.projects[item].inWork = true; 
-              mobileDepartment.workers[`worker${Object.keys(mobileDepartment.workers).length}`] = this.projects[item].worker;
-              addWorker +=1;
-            } 
-          }else{ 
-            if (this.projects[project].type === 0){
-                webDepartment.workers[nameWorker].doProject = project;
-                director.projects[project].worker = person
-                director.projects[project].worker.working = true;
-                director.projects[project].inWork = true;
-            }else{
-                mobileDepartment.workers[nameWorker].doProject = project;
-                director.projects[project].worker = person
-                director.projects[project].worker.working = true;
-                director.projects[project].inWork = true;
-            } 
+    recruit(person,project){
+      for(let item of director.projects){
+        if(!item.inWork && !item.done && item.worker.length === 0 && !person && !project){
+          if(item.type === 0){
+            const newWebWorker = new Worker(0,true, item.id, 0,0);
+            item.worker = [...item.worker, newWebWorker];
+            item.inWork = true; 
+            webDepartment.workers = [...webDepartment.workers, newWebWorker];
+            addWorker += 1;
+          }else{
+            const newMobileWorker = new Worker(1,true, item.id, 0,0);
+            item.worker = [...item.worker, newMobileWorker];
+            
+            item.inWork = true; 
+            mobileDepartment.workers = [...mobileDepartment.workers, newMobileWorker]; 
+            addWorker +=1;
           }
-                  
-        }
+        }else if(!item.inWork && !item.done && item.worker.length === 0 && person && project && item === project){ 
+            if (project.type === 0){
+              for(let worker of webDepartment.workers){
+                if(worker === person){
+                  person.doProject = project.id;
+                }
+              }
+            }else{
+              for(let worker of mobileDepartment.workers){
+                if(worker === person){
+                  person.doProject = project.id;
+                }
+              } 
+            }
+            person.working = true;
+            item.worker = [...item.worker,person];  
+            project.inWork = true;
+        }         
       }
     }   
-    recruitTester(proj, pers,w){
-        if(!pers){
-          for(let i in this.projects){   
-            if(this.projects[i] === proj){
-              this.projects[i].worker = new Worker('test',false,i,0,0);
-              this.projects[i].worker.working = true;
-              testDepartment.workers[`worker${parseInt(Object.keys(testDepartment.workers).length)}`] = director.projects[i].worker;
-              director.projects[i].statusTest += 1;
-              addWorker +=1;
-            }    
-          }
-        }else{
-          console.log('object% :>> ');
-          for(let i in this.projects){ 
-            if(this.projects[i] == proj){
-              this.projects[i].worker = pers;
-              this.projects[i].worker.working = true;
-              this.projects[i].worker.doProject = i;
-              testDepartment.workers[w].working = true;
-              testDepartment.workers[w].doProject = i;
-              director.projects[i].statusTest += 1;
-            }    
+    recruitTester(project,worker){  
+      if(!worker){ 
+        project.worker = new Worker(3,true, project.id, 0,0);
+        testDepartment.workers = [...testDepartment.workers , project.worker];
+        addWorker += 1;
+      }else{
+        worker.doProject = project.id;
+        worker.working = true;
+        worker.badDay = 0;
+        for(let item of director.projects){
+          if(item === project){
+            worker.working = true;
+            item.worker = worker;
           }
         }
+      }        
     }
 }
 
 class Departments extends Director{
-    workers = []
-    constructor(option,projects){
-      super(projects);
-      this.type = option.type;
-    }
-    
+  workers = [];
+  constructor(option,projects){
+    super(projects);
+    this.type = option.type;
+  }
+  
 
-    set addProjectFromDirector(listProject){
-      for(let item in listProject){
-        if (listProject[item].type === this.type && listProject[item].inWork === false && listProject[item].worker === undefined){
-          for(let person in this.workers){
-            if(this.workers[person].working === false && this.workers[person].doProject === '0'){
-                director.recruit(this.workers[person],item,person);   
+  set setWorkerOnProj(listProject){
+    for(let item of listProject){
+      if (item.type === this.type === 0 && !item.inWork  && item.worker.length === 0 && !item.done){
+        for(let person of this.workers){
+          if(!person.working && person.doProject === 0){
+              director.recruit(person,item);   
+          }
+        }
+      }else{
+        for(let worker of this.workers){
+          if(item.hard !== 0 && item.worker.length < 3 && !worker.working && worker.doProject === 0){
+            director.recruit(worker,item);
+          }
+        } 
+      }  
+    }
+    // console.log(this.workers);
+  }
+
+                
+  set work(listProject){
+    for(let item of director.projects){
+      if(this.type === item.type && item.inWork && !item.done){
+        item.statusDone += 1;
+      }
+
+      if(this.type === 1 && this.type === item.type && !item.done ){
+        switch(item.worker.length){
+          case 2:
+            item.hard = 1;
+            break;
+          case 3:
+            item.hard = 0;
+            break;
+        }
+      }
+
+      if(((item.hard === 0 && item.statusDone >= 1) ||
+      (item.hard === 1 && item.statusDone >= 2) ||
+      (item.hard === 2 && item.statusDone >= 3)) && !item.done){
+
+        for(let worker of this.workers){
+          if (item.id === worker.doProject){
+            worker.donesProject += 1;
+            worker.doProject = 0;
+            worker.working = false; 
+          }
+        }
+        item.done = true;
+        item.worker = [];
+      }
+    } 
+  }
+
+  testing(){
+    for(let item of director.projects){
+      if(item.done && item.worker.length === 0 && item.statusTest === 0){ 
+        if(this.workers.length === 0){
+          director.recruitTester(item);
+        }else{
+          for(let worker of this.workers){
+            if(!worker.working && worker.doProject === 0){
+              director.recruitTester(item,worker);
             }
           }
-          // if(this.type === 1){
-            
-          // }
-          
+        }
+      }
+      
+      if(item.worker.length !== 0 && item.done){
+        item.statusTest += 1;
+      } 
+      for(let worker of this.workers){
+        if(item.statusTest >= 1 && item.id === worker.doProject){
+          worker.donesProject += 1;
+          worker.doProject = 0;
+          worker.working = false;
+          for(let project in director.projects){
+            if(item === director.projects[project]){
+              director.projects.splice(project,1);
+            }
+          }
+          relise +=1;
         }  
       }
-      console.log(this);
     }
-                  
-    set work(listProject){
+  }
+  
+  
+  deleteProgrammer(){
+    let badWorkers = [], min = 0;
 
-      for(let item in director.projects){
-        if(this.type === director.projects[item].type && director.projects[item].inWork === true){
-          director.projects[item].statusDone += 1;
-        }
-        if((director.projects[item].hard === 0 && director.projects[item].statusDone >= 1) ||
-        (director.projects[item].hard === 1 && director.projects[item].statusDone >= 2) ||
-        (director.projects[item].hard === 2 && director.projects[item].statusDone >= 3)){
-          director.projects[item].done = true;
-          for(let worker in this.workers){
-            if (item === this.workers[worker].doProject){
-              this.workers[worker].donesProj += 1;
-              this.workers[worker].doProject = '0';
-              this.workers[worker].working = false; 
-            }
-          }
-          delete director.projects[item].worker;
-          console.log('object :>> ', director.projects[item].worker);
-          console.log(' list:>> ',director.projects);
-          testDepartment.testing = director.project
-        }
-        
-      } 
-    }
-
-    set testing(listProject){
-      for(let i in director.projects){
-        if(director.projects[i].done === true ){
-          if(this.workers.length === 0 && director.projects[i].worker === undefined && director.projects[i].statusTest === 0){
-            director.recruitTester(director.projects[i]);
-          }else{
-            for(let worker in this.workers){
-              // console.log('object :>> ', i, director.projects);
-              if(director.projects[i].worker === undefined && this.workers[worker].working === false && director.projects[i]){
-                director.recruitTester(director.projects[i],this.workers[worker],worker);
-              }
-              if(director.projects[i].statusTest === 2 && i === this.workers[worker].doProject){
-                this.workers[worker].donesProj += 1;
-                this.workers[worker].doProject = '0';
-                this.workers[worker].working = false;
-              }
-            }
-          }
-          if(director.projects[i].statusTest === 2){
-            delete director.projects[i];
-            relise +=1;
-          }else{
-            director.projects[i].statusTest +=1;
-          }
-        }         
-      }  
-    } 
-    deleteProgrammer(){
-      for(let worker in this.workers){
-        if(this.workers[worker].working === false){
-          this.workers[worker].badDay += 1;
-        }else{
-          this.workers[worker].badDay = 0;
-        }
-        if(this.workers[worker].badDay === 3 ){
-          delete this.workers[worker];
-          remWorker +=1;
-        }
-        
+    for(let worker of this.workers){
+      if(worker.working === false){
+        worker.badDay += 1;
+      }else{
+        worker.badDay = 0;
+      }
+      if(worker.badDay >= 3 ){
+        badWorkers = [...badWorkers, worker]; 
       }
     }
-    
+    if(badWorkers.length > 1){
+      badWorkers.forEach((item,index,arr) => {
+        if(arr[index + 1] && arr[index].donesProject > arr[index + 1].donesProject ){
+          min = index + 1;
+        }else{
+          min = index;
+        }
+      });
+      for(let worker in this.workers){
+        if(this.workers[worker] === badWorkers[min]){
+          this.workers.splice(worker,1);
+          remWorker +=1;
+        }
+      }
+
+    }else if(badWorkers.length === 1){
+      for(let worker in this.workers){
+        if(this.workers[worker] === badWorkers[0]){
+          this.workers.splice(worker,1);
+          remWorker +=1;
+        }
+      }       
+    }
+  } 
 }
 
 class Worker{
-    constructor(type,working,doProject,donesProj,badDay){
+    constructor(type,working,doProject,donesProject,badDay){
         this.type = type;
         this.working = working;
         this.doProject = doProject;
-        this.donesProj = donesProj;
+        this.donesProject = donesProject;
         this.badDay = badDay;
     }
 }
@@ -194,7 +234,7 @@ class Worker{
 const director = new Director([]);
 const webDepartment = new Departments({type: 0});
 const mobileDepartment = new Departments({type: 1})
-const testDepartment = new Departments({type: 'test'})
+const testDepartment = new Departments({type: 3})
 
 function company(day){
     for(let i = 0;i < day;i++){
@@ -202,32 +242,26 @@ function company(day){
         director.recruit();
       }
         director.addNewProjects = Math.round(Math.random() * 4);
+        // console.log(`Day ${i+1} \n\n Projects>>>`,director.projects);
 
-        console.log(`Day ${i+1} \n\n list:>> `,director.projects);
-
-        console.log('Web');
-        webDepartment.addProjectFromDirector = director.projects
-        console.log('Mobile')
-        mobileDepartment.addProjectFromDirector = director.projects
-        
+        // console.log('Web');
+        webDepartment.setWorkerOnProj = director.projects
+        // console.log('Mobile')
+        mobileDepartment.setWorkerOnProj = director.projects
+      
         webDepartment.work = director.projects;
         mobileDepartment.work = director.projects;
+        testDepartment.testing();
+        
         webDepartment.deleteProgrammer();
         mobileDepartment.deleteProgrammer();
         testDepartment.deleteProgrammer();
         
-
-        console.log('Test')
-        console.log(testDepartment);
-        
-        
-        console.log('---------------------------------')
-        // console.log('webDepartament >>', webDepartment);
-        // console.log('mobileDepartament >>', mobileDepartment);
-        console.log('-------------end----------------')
+        // console.log('Test')
+        // console.log(testDepartment);
     }
 
     console.log(`Нанято рабочих ${addWorker}\n Уволено рабочих ${remWorker}\n Реализовано проектов ${relise}`);
 }
-company(100);
+company(1000);
 
